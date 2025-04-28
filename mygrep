@@ -1,7 +1,4 @@
-
-
-
-#/////////////////////////check the function that validated the search pattern /////////////////////////////////
+#!/bin/bash
 # Initialize flags
 ShowLineNumbers=0
 InvertMatch=0
