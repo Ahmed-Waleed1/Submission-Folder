@@ -1,0 +1,107 @@
+
+
+
+#/////////////////////////check the function that validated the search pattern /////////////////////////////////
+# Initialize flags
+ShowLineNumbers=0
+InvertMatch=0
+SearchPattern=""
+FileName=""
+
+# Bonus 1
+# --help flag to print usage info.
+usage() {
+  echo "Usage: $0 [-v] [-n] <pattern> <file>"
+  echo "Options:"
+  echo "  -v    Invert match (print lines that do not match)"
+  echo "  -n    Show line numbers for each match"
+  echo "  -vn   Invert match and show line numbers"
+  echo "  -nv   Show line numbers and invert match"
+  echo "  --help      Display this help message"
+  echo "Arguments:"  
+  echo "  <pattern>  Search string (case-sensitive)"
+  echo "  <file>     File to search in"
+  echo "Example: $0 -n hello testfile.txt"
+  exit 1
+}
+
+# Check if the first argument is --help to display usage info
+if [[ "$1" == "--help" ]]; then
+  usage
+fi
+
+# Bonus 2
+# Parse options using getopts
+while getopts "vn" opt; do
+  case $opt in
+    v) InvertMatch=1 ;;
+    n) ShowLineNumbers=1 ;;
+    *) usage ;;
+  esac
+done
+
+# Remove the processed options
+shift $((OPTIND - 1))
+
+# Check if we have the correct number of arguments
+if [ $# -lt 2 ]; then
+  echo -e "Error: Too Few Arguments.\n"
+  usage
+  exit 1
+fi
+
+# Assign the SearchPattern and FileName  
+SearchPattern=$1
+FileName=$2
+
+# check if user gave a file name as pattern
+if [ -f "$SearchPattern" ]; then
+  echo -e "Error: Missing search pattern. You gave a file name as pattern.\n"
+  usage
+  exit 1
+fi
+# Validate the file
+if [ ! -f "$FileName" ]; then
+  echo -e "mygrep: '$FileName': No such file or directory\n"
+  usage
+  exit 1
+fi
+
+# grep logic  implementation
+
+# by initializing this variable 
+# we will keep track of the line number we are reading inside the file 
+LineNumber=0
+# read file line by line and ignore the white spaces run
+# and one more time whenever there’s still content in $line
+while IFS= read -r line || [ -n "$line" ]; do
+    # Increment the line number to read the next line in the next while loop
+  LineNumber=$((LineNumber + 1))
+  
+  # Convert both the line and the search pattern to lowercase
+  lower_line="${line,,}"
+  lower_pattern="${SearchPattern,,}"
+
+  # Check if any part of the line matches the SearchPattern value
+  if [[ "$lower_line" == *"$lower_pattern"* ]]; then
+    MatchFound=1
+  else
+    MatchFound=0
+  fi
+
+  # Invert match if -v option is active
+  if [ $InvertMatch -eq 1 ]; then
+    # Flip 0 to 1 and 1 to 0, so we can print lines that do not match
+    MatchFound=$((1 - MatchFound))  
+  fi
+
+  # If final MatchFound is 1, print the line
+  if [ $MatchFound -eq 1 ]; then
+    if [ $ShowLineNumbers -eq 1 ]; then
+      echo "${LineNumber}:$line"
+    else
+      echo "$line"
+    fi
+  fi
+  # read line from this file
+done < "$FileName"
